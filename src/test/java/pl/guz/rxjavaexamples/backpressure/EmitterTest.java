@@ -12,20 +12,7 @@ public class EmitterTest {
 
     @Test
     public void should_emit_test() {
-        new AtomicInteger(0);
-        Flowable.generate(
-                () -> new AtomicInteger(0),
-                (AtomicInteger init, Emitter<Integer> emitter) -> {
-                    int a = init.incrementAndGet();
-                    if (a != 2) {
-                        emitter.onNext(a);
-                    } else {
-                        System.out.println("Nothing emit!");
-                    }
-                },
-                atomicInteger -> {
-                }
-        )
+        brokenEmitter()
                 .doOnNext(System.out::println)
                 .blockingSubscribe(new Subscriber<Integer>() {
                     @Override
@@ -47,6 +34,30 @@ public class EmitterTest {
                         System.out.println("Complete");
                     }
                 });
+    }
+
+    @Test
+    public void flatMap_broken_emitter_test() {
+        brokenEmitter()
+                .doOnNext(System.out::println)
+                .rebatchRequests(2)
+                .blockingSubscribe();
+    }
+
+    private Flowable<Integer> brokenEmitter() {
+        return Flowable.generate(
+                () -> new AtomicInteger(0),
+                (AtomicInteger init, Emitter<Integer> emitter) -> {
+                    int a = init.incrementAndGet();
+                    if (a != 2) {
+                        emitter.onNext(a);
+                    } else {
+                        System.out.println("Nothing emit!");
+                    }
+                },
+                atomicInteger -> {
+                }
+        );
     }
 
 }
